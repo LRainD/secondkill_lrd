@@ -58,10 +58,6 @@ public class UserController {
         }
 
         if (userService.login(phone, password)) {
-            // 返回jsp页面
-            // 前缀 --> name="prefix" value="/WEB-INF/jsp/"
-            // 后缀 --> name="suffix" value=".jsp"
-            // 默认页面的位置：/WEB-INF/jsp/seckill_list.jsp
 
             // 登录成功
             request.getSession().setAttribute("user", userService.getUserByPhone(phone));
