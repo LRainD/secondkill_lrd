@@ -1,0 +1,29 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/secondkill?serverTimezone=Asia/Shanghai&useUnicode=true&zeroDateTimeBehavior=convertToNull&autoReconnect=true&characterEncoding=utf-8
+#    jdbc:mysql://localhost:3306/secondkill?serverTimezone=Asia/Shanghai&useUnicode=true&zeroDateTimeBehavior=convertToNull&autoReconnect=true&characterEncoding=utf-8
+#  jdbc:mysql://47.97.223.129:3306/secondkill?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: lrd19991020
+#      Z007813njko.
+#    lrd19991020
+    #Spring boot视图配置
+    mvc:
+      view:
+        prefix: /WEB-INF
+        suffix=: .jsp
+      #静态文件访问配置
+      static-path-pattern: /static/**
+  redis:
+    database: 0
+#    host: 192.168.1.112
+    host: 127.0.0.1
+    port: 6379
+    timeout: 0
+
+mybatis:
+  type-aliases-package: com.example.secondkill.entity
+  mapper-locations: classpath:mapper/*.xml
+
+
