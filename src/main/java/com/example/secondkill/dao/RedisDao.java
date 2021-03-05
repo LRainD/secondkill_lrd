@@ -76,6 +76,29 @@ public class RedisDao {
     }
 
 
+
+    final static String LUA_SCRIPT;
+
+    static {
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("if (redis.call('exists', KEYS[1]) == 1) then");
+        sb.append("    local stock = tonumber(redis.call('get', KEYS[1]));");
+        sb.append("    if (stock == -1) then");
+        sb.append("        return -1");
+        sb.append("    end;");
+        sb.append("    if (stock > 0) then");
+        sb.append("        redis.call('incrby', KEYS[1], -1);");
+        sb.append("        return stock - 1;");
+        sb.append("    end;");
+        sb.append("    return -1;");
+        sb.append("end;");
+        sb.append("return -2;");
+
+        LUA_SCRIPT = sb.toString();
+    }
+
+
     public Integer stockDecr(String key) {
 
 
@@ -83,18 +106,47 @@ public class RedisDao {
         // -2 不存在
         // 整数是正常操作，减库存成功
 
-        Integer result = (Integer) redisTemplate.opsForValue().get(key);
-        System.out.println(result);
-        if (ObjectUtil.isEmpty(result)){
-            return -2;
-        }
+        //不原子性的方案
+//        Integer result = (Integer) redisTemplate.opsForValue().get(key);
+//        System.out.println(result);
+//        if (ObjectUtil.isEmpty(result)){
+//            return -2;
+//        }
+//
+//        if (result>0){
+//            redisTemplate.opsForValue().decrement(key);
+//            return result-1;
+//        }else {
+//            return -1;
+//        }
 
-        if (result>0){
-            redisTemplate.opsForValue().decrement(key);
-            return result-1;
-        }else {
-            return -1;
-        }
+        final List<String> keys = new ArrayList<String>();
+        keys.add(key);
+        // 脚本里的ARGV参数
+        final List<String> args = new ArrayList<String>();
+
+        Integer result = redisTemplate.execute(new RedisCallback<Integer>() {
+
+            public Integer doInRedis(RedisConnection connection) throws DataAccessException {
+                Object nativeConnection = connection.getNativeConnection();
+                // 集群模式和单机模式虽然执行脚本的方法一样，但是没有共同的接口，所以只能分开执行
+                // redis集群模式，执行脚本
+//                if (nativeConnection instanceof JedisCluster) {
+//                    return (Integer) ((JedisCluster) nativeConnection).eval(LUA_SCRIPT, keys, args);
+//                }
+
+                // redis单机模式，执行脚本
+//                else if (nativeConnection instanceof Jedis) {
+                if (nativeConnection instanceof Jedis) {
+                    Object temp = ((Jedis) nativeConnection).eval(LUA_SCRIPT, keys, args);
+                    System.out.println(" =========================================================" + temp);
+                    return Integer.valueOf(String.valueOf(temp));
+                }
+
+                return null;
+            }
+        });
+        return result;
 
     }
 }
